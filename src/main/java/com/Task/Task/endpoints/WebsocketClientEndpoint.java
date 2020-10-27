@@ -8,31 +8,33 @@ import com.Task.Task.messages.SubscribeRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+import javax.websocket.*;
 import java.net.URI;
-import java.util.*;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import java.util.Arrays;
 
 
 @Slf4j
 @ClientEndpoint
+@Service
 public class WebsocketClientEndpoint {
+    private final static String URL = "wss://ws-feed.pro.coinbase.com";
 
     private Session session;
-    private MessageHandler messageHandler;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final MessageHandler messageHandler;
+    private final ObjectMapper mapper;
 
-    public WebsocketClientEndpoint(URI endpointURI) {
+    public WebsocketClientEndpoint(MessageHandler messageHandler, ObjectMapper mapper) {
+        this.mapper = mapper;
+        this.messageHandler = messageHandler;
+        connectToServer();
+    }
+
+    private void connectToServer() {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpointURI);
+            container.connectToServer(this, new URI(URL));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -41,6 +43,7 @@ public class WebsocketClientEndpoint {
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
+        subscribeToTicker();
         log.info("Session open");
     }
 
@@ -57,10 +60,6 @@ public class WebsocketClientEndpoint {
         }
     }
 
-    public void setMessageHandler(MessageHandler messageHandler) {
-        this.messageHandler = messageHandler;
-    }
-
     public void sendMessageAsJson(Object message) {
         try {
             this.session.getAsyncRemote().sendText(mapper.writeValueAsString(message));
@@ -72,7 +71,7 @@ public class WebsocketClientEndpoint {
     public void subscribeToTicker() {
         String[] channels = {ChannelType.ticker.toString()};
         String[] productIds = {Instrument.BTCEUR.getProductId(), Instrument.BTCUSD.getProductId(),
-                                Instrument.ETHEUR.getProductId(), Instrument.ETHUSD.getProductId()};
+                Instrument.ETHEUR.getProductId(), Instrument.ETHUSD.getProductId()};
         SubscribeRequest request = new SubscribeRequest(Arrays.asList(productIds), Arrays.asList(channels));
         sendMessageAsJson(request);
     }

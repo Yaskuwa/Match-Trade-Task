@@ -14,11 +14,14 @@ import java.util.Map;
 
 @RestController
 public class TickerController {
-
-    private final ObjectMapper mapper = new ObjectMapper();
     @Getter
     private final static Map<Instrument, TickerResponse> lastResponses = new HashMap<>();
 
+    private final ObjectMapper mapper;
+
+    public TickerController(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @GetMapping("/ticker")
     public String sendLastTickerResponses() throws JsonProcessingException {

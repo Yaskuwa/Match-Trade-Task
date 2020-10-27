@@ -5,11 +5,13 @@ import com.Task.Task.messages.TickerResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@Component
 public class ResponseMessageHandler implements MessageHandler {
 
     private final static String PRODUCT_ID = "product_id";
@@ -19,7 +21,11 @@ public class ResponseMessageHandler implements MessageHandler {
     private final static String TIME = "time";
     private final static String TYPE = "type";
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
+
+    public ResponseMessageHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public void handleMessage(String message) {
